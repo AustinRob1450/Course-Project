@@ -9,13 +9,12 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms, utils
 from torch.utils.tensorboard import SummaryWriter
 from ConvNet import ConvNet 
-import MNISTgenerator
 import argparse
 import numpy as np 
 import time
 import subprocess
+import matplotlib.pyplot as plt
 
-import MNISTgenerator as MNISTgen
 
 def train(model, device, train_loader, optimizer, criterion, epoch, batch_size):
     '''
@@ -39,7 +38,8 @@ def train(model, device, train_loader, optimizer, criterion, epoch, batch_size):
     # Iterate over entire training samples (1 epoch)
     for batch_idx, batch_sample in enumerate(train_loader):
         data, target = batch_sample
-        
+        print(data.shape)
+
         # Push data/label to correct device
         data, target = data.to(device), target.to(device)
 
@@ -55,7 +55,6 @@ def train(model, device, train_loader, optimizer, criterion, epoch, batch_size):
         # ----------------- YOUR CODE HERE ----------------------
         #
         # Remove NotImplementedError and assign correct loss function.
-        # loss = criterion(output, target)
         loss = criterion(output, target)
 
         # Computes gradient based on final loss
@@ -158,8 +157,8 @@ def run_main(FLAGS):
     # ----------------- YOUR CODE HERE ----------------------
     #
     # Remove NotImplementedError and assign correct loss function.
-    criterion = nn.CrossEntropyLoss()
-    
+    criterion = nn.MSELoss()
+
     # ======================================================================
     # Define optimizer function.
     # ----------------- YOUR CODE HERE ----------------------
@@ -172,22 +171,19 @@ def run_main(FLAGS):
     # Create transformations to apply to each data sample 
     # Can specify variations such as image flip, color flip, random crop, ...
     transform=transforms.Compose([
+        transforms.Grayscale(num_output_channels=1),
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
         ])
 
-   
-   
-    # python generator.py --num_image_per_class 1000 --multimnist_path ./dataset/double_mnist --num_digit 2 --image_size 64 64
-    # flagz = ['python generator.py --num_image_per_class 1000 --multimnist_path ./dataset/double_mnist --num_digit 2 --image_size 64 64']
-    doubles = ''.join(map(str,(["python generator.py", " --multimnist_path", ' ./dataset/double_mnist', " --num_digit ", 2])))
-    triples = ''.join(map(str,(["python generator.py", " --multimnist_path", ' ./dataset/triple_mnist', " --num_digit ", 3])))
-    collectDoubleSet = subprocess.Popen(doubles, shell=True)
-    collectTripleSet = subprocess.Popen(triples, shell=True)
+    train_loader = DataLoader(datasets.ImageFolder(root='./dataset/double_mnist/train', transform = transform), 
+                                                   batch_size = FLAGS.batch_size, shuffle=True, num_workers=4)
+    test_loader = DataLoader(datasets.ImageFolder(root='./dataset/double_mnist/test', transform = transform), 
+                                                  batch_size = FLAGS.batch_size, shuffle=False, num_workers=4)
 
-    print(collectDoubleSet)
+    print("train_dataset:~~~~~", train_loader)
+    print("test_dataset:~~~~~", test_loader)
 
-    train_loader = 
 
     best_accuracy = 0.0
     
@@ -214,11 +210,11 @@ if __name__ == '__main__':
                         type=int, default=1,
                         help='Select mode between 1-5.')
     parser.add_argument('--learning_rate',
-                        type=float, default=0.01,
+                        type=float, default=0.03,
                         help='Initial learning rate.')
     parser.add_argument('--num_epochs',
                         type=int,
-                        default=60,
+                        default=10,
                         help='Number of epochs to run trainer.')
     parser.add_argument('--batch_size',
                         type=int, default=12,
