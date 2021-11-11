@@ -15,6 +15,7 @@ import time
 import subprocess
 import matplotlib.pyplot as plt
 
+print("Hello World")
 
 def train(model, device, train_loader, optimizer, criterion, epoch, batch_size):
     '''
